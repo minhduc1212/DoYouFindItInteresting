@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Do You Find It Interesting?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── Ambient background orbs ── -->
+  <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+  <!-- ── Page wrapper ── -->
+  <div class="page">
+
+    <!-- ── Header ── -->
+    <header class="header">
+      <div class="header__eyebrow">
+        <span class="header__dot" aria-hidden="true"></span>
+        <span>Knowledge Feed</span>
+      </div>
+      <h1 class="header__title">Do You Find It Interesting?</h1>
+      <p class="header__subtitle">
+        One idea. Rendered clearly. Hover the <span class="header__highlight">underlined terms</span> to go deeper.
+      </p>
+    </header>
+
+    <!-- ── Main content card ── -->
+    <main class="main">
+      <article class="card" id="knowledge-card" aria-live="polite" aria-atomic="true">
+
+        <!-- Loading state (shown on fetch) -->
+        <div class="card__loading" id="loading-state" hidden>
+          <div class="loader">
+            <span></span><span></span><span></span>
+          </div>
+          <p class="loader__text">Fetching knowledge…</p>
+        </div>
+
+        <!-- Empty / initial state -->
+        <div class="card__empty" id="empty-state">
+          <div class="card__empty-icon" aria-hidden="true">✦</div>
+          <p class="card__empty-text">Press the button below to surface a piece of knowledge.</p>
+        </div>
+
+        <!-- Article content (populated by JS) -->
+        <div class="card__content" id="article-content" hidden>
+          <div class="card__meta" id="article-meta"></div>
+          <h2 class="card__title" id="article-title"></h2>
+          <div class="card__divider" aria-hidden="true"></div>
+          <p class="card__body" id="article-body"></p>
+          <footer class="card__footer" id="article-footer"></footer>
+        </div>
+
+      </article>
+
+      <!-- ── Counter badge ── -->
+      <div class="counter" id="counter" aria-live="polite" hidden>
+        <span id="counter-text"></span>
+      </div>
+    </main>
+
+    <!-- ── Action bar ── -->
+    <div class="action-bar">
+      <button class="btn btn--primary" id="randomize-btn" aria-label="Load a random piece of knowledge">
+        <span class="btn__icon" aria-hidden="true">↻</span>
+        <span class="btn__label">Randomize</span>
+      </button>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer class="site-footer">
+      <p>Built with <span aria-hidden="true">◆</span> FastAPI + Vanilla JS</p>
+    </footer>
+
+  </div>
+
+  <!-- ── Glassmorphism Tooltip (singleton, positioned by JS) ── -->
+  <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true">
+    <div class="tooltip__term" id="tooltip-term"></div>
+    <div class="tooltip__definition" id="tooltip-definition"></div>
+    <div class="tooltip__arrow" id="tooltip-arrow" aria-hidden="true"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

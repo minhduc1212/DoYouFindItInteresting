@@ -1,0 +1,528 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Today I Learned — Minimalist Editorial CSS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 0. Reset & Custom Properties ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Critical: ensure [hidden] always wins over any display rules */
+[hidden] { display: none !important; }
+
+:root {
+  --color-bg:          #FAF9F6;
+  --color-bg-card:     #FFFFFF;
+  --color-text:        #2C2C2C;
+  --color-text-muted:  #888888;
+  --color-text-light:  #BBBBBB;
+  --color-border:      #EBEBEB;
+
+  --color-accent:      #C9873A;
+  --color-accent-soft: rgba(201, 135, 58, 0.10);
+  --color-accent-glow: rgba(201, 135, 58, 0.22);
+
+  --color-term:        #2D6A8F;
+  --color-term-bg:     rgba(45, 106, 143, 0.08);
+
+  --tooltip-bg:        rgba(255, 255, 255, 0.80);
+  --tooltip-border:    rgba(200, 210, 220, 0.6);
+  --tooltip-shadow:    0 8px 32px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  --font-serif:  'Playfair Display', Georgia, serif;
+  --font-body:   'Lora', Georgia, serif;
+  --font-ui:     'DM Sans', system-ui, sans-serif;
+
+  --content-width: 876px;
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 1. Base ──────────────────────────────────────────────────────────────── */
+html {
+  font-size: 18px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── 2. Ambient Orbs ──────────────────────────────────────────────────────── */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.30;
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 18s ease-in-out infinite alternate;
+}
+.bg-orb--1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(201,135,58,0.3), transparent 70%);
+  top: -150px; right: -100px;
+}
+.bg-orb--2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(45,106,143,0.25), transparent 70%);
+  bottom: -100px; left: -80px;
+  animation-delay: -9s;
+}
+@keyframes orb-drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(30px,20px) scale(1.05); }
+}
+
+/* ── 3. Page Layout ───────────────────────────────────────────────────────── */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 56px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── 4. Header ────────────────────────────────────────────────────────────── */
+.header { text-align: center; }
+
+.header__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 14px;
+}
+
+.header__dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%     { opacity:.5; transform:scale(.8); }
+}
+
+.header__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-text);
+  margin-bottom: 14px;
+}
+
+.header__subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  max-width: 828px;
+  margin: 0 auto;
+}
+
+.header__highlight {
+  color: var(--color-term);
+  border-bottom: 1.5px dashed var(--color-term);
+  padding-bottom: 1px;
+}
+
+/* ── 5. Card ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  /* Remove min-height / centering so content naturally fills the card */
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.04),
+    0 4px 20px rgba(0,0,0,0.05);
+}
+
+/* Top accent line — appears after first load */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 48px; right: 48px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.card.card--loaded::before { opacity: 1; }
+
+/* ── 5a. Loading State ── */
+.card__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 40px;
+}
+
+.loader { display:flex; gap:8px; align-items:center; }
+.loader span {
+  display:block; width:8px; height:8px;
+  border-radius:50%; background:var(--color-accent);
+  animation: loader-bounce 1.2s ease-in-out infinite;
+}
+.loader span:nth-child(2) { animation-delay:.2s; }
+.loader span:nth-child(3) { animation-delay:.4s; }
+@keyframes loader-bounce {
+  0%,80%,100% { transform:scale(.7); opacity:.4; }
+  40%         { transform:scale(1);  opacity:1; }
+}
+
+.loader__text {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+}
+
+/* ── 5b. Empty State ── */
+.card__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 80px 40px;
+  animation: fade-in 0.4s var(--ease-out) both;
+}
+
+.card__empty-icon {
+  font-size: 2rem;
+  color: var(--color-border);
+  animation: spin-slow 12s linear infinite;
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.card__empty-text {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  max-width: 280px;
+  line-height: 1.65;
+}
+
+/* ── 5c. Article Content ── */
+.card__content {
+  /* Full-width padding, no centering magic */
+  padding: 44px 48px 40px;
+  animation: content-enter 0.5s var(--ease-out) both;
+}
+
+@keyframes content-enter {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 20px;
+}
+
+.meta__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-glow);
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.meta__sep { color: var(--color-border); }
+
+.card__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  margin-bottom: 20px;
+}
+
+.card__divider {
+  width: 36px; height: 2px;
+  background: var(--color-accent);
+  border-radius: 2px;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+/* ── THE KEY FIX: body text big, readable, full width ── */
+.card__body {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: var(--color-text);
+  letter-spacing: 0.01em;
+  /* No max-width restriction — let it fill the card */
+  width: 100%;
+}
+
+.card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.footer__terms-info {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+.footer__terms-info strong {
+  color: var(--color-term);
+  font-weight: 500;
+}
+
+.footer__source-link {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color .2s;
+}
+.footer__source-link:hover { color: var(--color-accent); }
+.footer__source-link::after { content: '↗'; font-size: 0.68rem; }
+
+/* ── 6. Term Highlight ────────────────────────────────────────────────────── */
+.term-trigger {
+  color: var(--color-term);
+  border-bottom: 1.5px dashed var(--color-term);
+  cursor: pointer;
+  padding-bottom: 1px;
+  border-radius: 2px;
+  transition: background-color .15s ease;
+}
+.term-trigger:hover,
+.term-trigger:focus,
+.term-trigger.is-active {
+  background-color: var(--color-term-bg);
+  outline: none;
+}
+
+/* ── 7. Glassmorphism Tooltip ─────────────────────────────────────────────── */
+.tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 320px;
+  width: max-content;
+  padding: 14px 18px;
+
+  background: var(--tooltip-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 12px;
+  box-shadow: var(--tooltip-shadow);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.97);
+  transition:
+    opacity .18s var(--ease-out),
+    transform .18s var(--ease-out),
+    visibility 0s .18s;
+}
+
+.tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity .18s var(--ease-out),
+    transform .18s var(--ease-out),
+    visibility 0s 0s;
+}
+
+.tooltip__term {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-term);
+  margin-bottom: 6px;
+}
+
+.tooltip__definition {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.tooltip__arrow {
+  position: absolute;
+  width: 10px; height: 10px;
+  background: var(--tooltip-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid var(--tooltip-border);
+  border-top: 1px solid var(--tooltip-border);
+  transform: rotate(45deg);
+  bottom: -6px;
+  left: 50%;
+  translate: -50% 0;
+}
+.tooltip--above .tooltip__arrow {
+  bottom: auto;
+  top: -6px;
+  transform: rotate(225deg);
+}
+
+/* ── 8. Counter Badge ─────────────────────────────────────────────────────── */
+.counter {
+  text-align: center;
+  animation: fade-in 0.4s ease both;
+}
+.counter span {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  padding: 4px 14px;
+  border-radius: 99px;
+}
+
+/* ── 9. Action Bar ────────────────────────────────────────────────────────── */
+.action-bar {
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  border: none;
+  border-radius: 99px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background-color .2s ease,
+    transform .15s var(--ease-out),
+    box-shadow .2s ease;
+}
+.btn:active { transform: scale(0.96); }
+
+.btn--primary {
+  background: var(--color-accent);
+  color: #fff;
+  padding: 14px 40px;
+  box-shadow: 0 2px 10px var(--color-accent-glow);
+}
+.btn--primary:hover {
+  background: #b5742a;
+  box-shadow: 0 4px 18px var(--color-accent-glow);
+  transform: translateY(-1px);
+}
+.btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn__icon {
+  font-size: 1.1rem;
+  display: inline-block;
+  transition: transform 0.5s var(--ease-out);
+}
+.btn__icon.spinning {
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 10. Site Footer ──────────────────────────────────────────────────────── */
+.site-footer { text-align: center; }
+.site-footer p {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+}
+
+/* ── 11. Utilities ────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+/* ── 12. Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  :root { font-size: 16px; }
+
+  .page { padding: 40px 16px 36px; gap: 24px; }
+
+  .card__content { padding: 28px 24px 24px; }
+
+  .card__body { font-size: 1rem; line-height: 1.8; }
+
+  .tooltip { max-width: calc(100vw - 32px); }
+}
+
+/* ── 13. Reduced Motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
