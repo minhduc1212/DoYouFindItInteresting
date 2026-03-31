@@ -19,7 +19,6 @@ The Conversation: https://theconversation.com/
 Kew Science: https://www.kew.org/science/our-science/
 
 The Smithsonian Institution: https://www.si.edu/
-The National Museum of Natural History: https://naturalhistory.si.edu/s
 
 Rock Paper Shotgun: https://www.rockpapershotgun.com/
 Game Developer: https://www.gamedeveloper.com/
@@ -51,3 +50,5 @@ AV Club: https://www.avclub.com/
 
 Literary Hub: https://lithub.com/
 Reactor: https://reactor.com/
+
+Little White Lies: https://lwlies.com/
