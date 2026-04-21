@@ -4,7 +4,7 @@ Run automatically on first startup if the database is empty.
 """
 
 from sqlalchemy.orm import Session
-from models import Article, Term
+from .models import Article, Term
 
 
 MOCK_DATA = [
