@@ -117,9 +117,5 @@ def get_article_count(db: Session = Depends(get_db)):
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-@app.get("/")
-async def serve_frontend():
-    html_path = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(html_path):
-        return FileResponse(html_path)
-    return {"error": "Frontend HTML not found"}
+# Gắn toàn bộ thư mục frontend (chứa HTML, CSS, JS) vào đường dẫn gốc "/"
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
