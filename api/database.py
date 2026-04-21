@@ -8,9 +8,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Store the DB file one level up (project root), next to both backend/ and frontend/
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "til_database.db")
-DATABASE_URL = f"sqlite:///{os.path.abspath(DB_PATH)}"
+if "VERCEL" in os.environ:
+    # Vercel's serverless environment is ephemeral. Use the /tmp directory for the writable database.
+    DB_PATH = "/tmp/til_database.db"
+    DATABASE_URL = f"sqlite:///{DB_PATH}"
+else:
+    # Store the DB file one level up (project root) for local development.
+    DB_PATH = os.path.join(os.path.dirname(__file__), "..", "til_database.db")
+    DATABASE_URL = f"sqlite:///{os.path.abspath(DB_PATH)}"
 
 engine = create_engine(
     DATABASE_URL,

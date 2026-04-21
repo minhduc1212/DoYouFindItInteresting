@@ -4,13 +4,9 @@ Serves random knowledge snippets with highlighted technical terms.
 """
 
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import random
 import re
-import os
 
 from .database import SessionLocal, engine, Base
 from .models import Article, Term
@@ -21,13 +17,6 @@ from .seed import seed_database
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Do You Find It Interesting API", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
 
 # ── Dependency ─────────────────────────────────────────────────────────────────
 def get_db():
@@ -120,12 +109,3 @@ def get_random_knowledge(db: Session = Depends(get_db)):
 def get_article_count(db: Session = Depends(get_db)):
     """Returns the total number of articles in the database."""
     return {"count": db.query(Article).count()}
-
-# ── Static Frontend Serving ────────────────────────────────────────────────────
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
-
-app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse(os.path.join(frontend_path, "index.html"))
