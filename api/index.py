@@ -4,9 +4,12 @@ Serves random knowledge snippets with highlighted technical terms.
 """
 
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import random
 import re
+import os
 
 from .database import SessionLocal, engine, Base
 from .models import Article, Term
@@ -109,3 +112,14 @@ def get_random_knowledge(db: Session = Depends(get_db)):
 def get_article_count(db: Session = Depends(get_db)):
     """Returns the total number of articles in the database."""
     return {"count": db.query(Article).count()}
+
+# ── Static Frontend Serving ────────────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+@app.get("/")
+async def serve_frontend():
+    html_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(html_path):
+        return FileResponse(html_path)
+    return {"error": "Frontend HTML not found"}
