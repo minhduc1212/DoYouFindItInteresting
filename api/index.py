@@ -12,15 +12,15 @@ import random
 import re
 import os
 
-from database import SessionLocal, engine, Base
-from models import Article, Term
-from schemas import KnowledgeResponse, ContentSegment
-from seed import seed_database
+from .database import SessionLocal, engine, Base
+from .models import Article, Term
+from .schemas import KnowledgeResponse, ContentSegment
+from .seed import seed_database
 
 # ── App Setup ──────────────────────────────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Today I Learned API", version="1.0.0")
+app = FastAPI(title="Do You Find It Interesting API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

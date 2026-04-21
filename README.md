@@ -38,7 +38,7 @@ pip install -r requirements.txt
 
 ```bash
 cd backend
-uvicorn main:app --reload --port 8000
+uvicorn index:app --reload --port 8000
 ```
 
 The first startup auto-seeds the database with 5 articles and 30+ technical terms.
