@@ -1,5 +1,10 @@
 using models to summary and extract key points from the article
+    gemma4 local ? -> shit
+    gemma4 api
+    gemini
+    gpt 4o,...
+    deepseek
 
 add limited random -> if want to see more, pay for it
 
-save the article and terms in the user collection
+save the article and terms in the user collection   
