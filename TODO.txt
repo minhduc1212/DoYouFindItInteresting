@@ -1,0 +1,5 @@
+using models to summary and extract key points from the article
+
+add limited random -> if want to see more, pay for it
+
+save the article and terms in the user collection
