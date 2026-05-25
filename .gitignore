@@ -1,3 +1,5 @@
 .venv
 data
 .env
+summarize_data
+.antigravitycli
