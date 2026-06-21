@@ -35,7 +35,7 @@
   --font-body:   'Lora', Georgia, serif;
   --font-ui:     'DM Sans', system-ui, sans-serif;
 
-  --content-width: 876px;
+  --content-width: 1280px;
   --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -236,6 +236,11 @@ body {
   /* Full-width padding, no centering magic */
   padding: 44px 48px 40px;
   animation: content-enter 0.5s var(--ease-out) both;
+}
+
+#article-content {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 @keyframes content-enter {
@@ -500,6 +505,219 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* ── 9a. Mode Selector ────────────────────────────────────────────────────── */
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  z-index: 5;
+}
+
+.mode-btn {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 99px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s var(--ease-out);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.mode-btn:hover {
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border-color: var(--color-text-light);
+}
+
+.mode-btn.active {
+  background: var(--color-bg-card);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(201, 135, 58, 0.08);
+}
+
+.mode-btn__icon {
+  font-size: 0.95rem;
+}
+
+/* ── 9b. Video & Transcript Layout ───────────────────────────────────────── */
+.video-layout {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 24px;
+  margin-top: 16px;
+  text-align: left;
+  align-items: stretch;
+}
+
+.video-player-container {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-border);
+}
+
+.video-player-container iframe {
+  border: none;
+  width: 100%;
+  height: 100%;
+}
+
+.video-transcript-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  overflow: hidden;
+  height: 100%;
+  min-height: 250px;
+  max-height: 100%; /* fills the grid row height matching the 16:9 video */
+}
+
+.transcript-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(250, 249, 246, 0.6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.transcript-header__title {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.transcript-search {
+  position: relative;
+  flex: 1;
+  max-width: 150px;
+}
+
+.transcript-search input {
+  width: 100%;
+  padding: 6px 12px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  border: 1px solid var(--color-border);
+  border-radius: 99px;
+  background: var(--color-bg-card);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.transcript-search input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+.transcript-body {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar styling */
+.transcript-body::-webkit-scrollbar {
+  width: 6px;
+}
+.transcript-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.transcript-body::-webkit-scrollbar-thumb {
+  background: var(--color-text-light);
+  border-radius: 99px;
+}
+.transcript-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+.transcript-line {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.transcript-line:hover {
+  background: var(--color-accent-soft);
+}
+
+.transcript-line.active {
+  background: var(--color-accent-soft);
+  border-left: 3px solid var(--color-accent);
+  font-weight: 500;
+  padding-left: 5px; /* offset the border */
+}
+
+.transcript-line__time {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.transcript-line__text {
+  flex: 1;
+  text-align: left;
+}
+
+.transcript-line mark {
+  background: rgba(255, 235, 59, 0.45);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Reading Progress Bar for Articles */
+.progress-container {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 10;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--color-accent);
+  width: 0%;
+  transition: width 0.1s ease;
+}
+
 /* ── 11. Utilities ────────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity:0; }
@@ -510,13 +728,21 @@ body {
 @media (max-width: 640px) {
   :root { font-size: 16px; }
 
-  .page { padding: 40px 16px 36px; gap: 24px; }
+  .page { padding: 40px 16px 36px; gap: 20px; }
 
-  .card__content { padding: 28px 24px 24px; }
+  .card__content { padding: 24px 20px 20px; }
 
-  .card__body { font-size: 1rem; line-height: 1.8; }
+  .card__body { font-size: 0.95rem; line-height: 1.75; }
 
   .tooltip { max-width: calc(100vw - 32px); }
+
+  .video-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .video-transcript-container {
+    max-height: 250px;
+  }
 }
 
 /* ── 13. Reduced Motion ───────────────────────────────────────────────────── */
@@ -526,3 +752,41 @@ body {
     transition-duration: .01ms !important;
   }
 }
+
+/* ── 14. Transcript Visibility Toggle & Expanded Player ──────────────────── */
+.card__meta-right {
+  margin-left: auto;
+}
+
+.btn-toggle-transcript {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 5px 14px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-toggle-transcript:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.video-layout.video-layout--no-transcript {
+  grid-template-columns: 1fr;
+}
+
+.video-layout.video-layout--no-transcript .video-transcript-container {
+  display: none;
+}
+

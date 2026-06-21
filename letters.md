@@ -19,7 +19,6 @@
 | [Live Science](https://www.livescience.com/) | Science, nature, and discovery explained clearly. |
 | [The Conversation](https://theconversation.com/) | Analysis and commentary written directly by academics and researchers. |
 | [JSTOR Daily](https://daily.jstor.org/) | Free journalism that taps into JSTOR's academic archive for context. |
-| [Kew Science](https://www.kew.org/science/our-science/) | Botanical science from the Royal Botanic Gardens, Kew. |
 | [Smithsonian Institution](https://www.si.edu/) | Science, culture, history from the world's largest museum network. |
 | [HowStuffWorks](https://www.howstuffworks.com/) | Clear explanations of how everything in the world works. |
 | [Damn Interesting](https://www.damninteresting.com/) | Stranger-than-fiction true stories from science and history. |

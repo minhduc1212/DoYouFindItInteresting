@@ -1,30 +1,46 @@
 /**
- * Handles: API fetching, content rendering, and the glassmorphism tooltip system.
+ * Handles: API fetching, content rendering, and the video player load system.
  */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    1. DOM References
    ═══════════════════════════════════════════════════════════════════════════ */
-const randomizeBtn   = document.getElementById('randomize-btn');
-const btnIcon        = randomizeBtn.querySelector('.btn__icon');
-const card           = document.getElementById('knowledge-card');
-const loadingState   = document.getElementById('loading-state');
-const emptyState     = document.getElementById('empty-state');
-const articleContent = document.getElementById('article-content');
-const articleMeta    = document.getElementById('article-meta');
-const articleTitle   = document.getElementById('article-title');
-const articleBody    = document.getElementById('article-body');
-const articleFooter  = document.getElementById('article-footer');
-const counter        = document.getElementById('counter');
-const counterText    = document.getElementById('counter-text');
-const tooltip        = document.getElementById('tooltip');
-const tooltipTerm    = document.getElementById('tooltip-term');
-const tooltipDef     = document.getElementById('tooltip-definition');
-const tooltipArrow   = document.getElementById('tooltip-arrow');
+const randomizeBtn      = document.getElementById('randomize-btn');
+const btnIcon           = randomizeBtn.querySelector('.btn__icon');
+const card              = document.getElementById('knowledge-card');
+const loadingState      = document.getElementById('loading-state');
+const emptyState        = document.getElementById('empty-state');
+const loaderText        = document.getElementById('loader-text');
+const emptyText         = document.getElementById('empty-text');
+
+// Article Mode Elements
+const articleContent    = document.getElementById('article-content');
+const articleMeta       = document.getElementById('article-meta');
+const articleTitle      = document.getElementById('article-title');
+const articleBody       = document.getElementById('article-body');
+const articleFooter     = document.getElementById('article-footer');
+const progressBar       = document.getElementById('reading-progress');
+
+// Video Mode Elements
+const videoContent      = document.getElementById('video-content');
+const videoMeta         = document.getElementById('video-meta');
+const videoTitle        = document.getElementById('video-title');
+const videoFooter       = document.getElementById('video-footer');
+
+// General Elements
+const counter           = document.getElementById('counter');
+const counterText       = document.getElementById('counter-text');
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   2. State Machine — exactly ONE view is visible at a time
+   2. State & Config
    ═══════════════════════════════════════════════════════════════════════════ */
+let fetchCount        = 0;
+let currentSourceType = 'Article'; // Tracks current loaded source type
+
+// YouTube Player API State
+let isYoutubeAPILoaded = false;
+let ytPlayer           = null;
+let playerReady        = false;
 
 /**
  * Switch the card to one of three mutually-exclusive views.
@@ -34,245 +50,249 @@ function showView(view) {
   emptyState.hidden     = true;
   loadingState.hidden   = true;
   articleContent.hidden = true;
+  videoContent.hidden   = true;
 
-  if (view === 'empty')   emptyState.hidden     = false;
-  if (view === 'loading') loadingState.hidden   = false;
-  if (view === 'content') articleContent.hidden = false;
+  if (view === 'empty') {
+    emptyState.hidden = false;
+    progressBar.style.width = '0%';
+  }
+  if (view === 'loading') {
+    loadingState.hidden = false;
+    progressBar.style.width = '0%';
+  }
+  if (view === 'content') {
+    if (currentSourceType === 'Article') {
+      articleContent.hidden = false;
+    } else {
+      videoContent.hidden = false;
+    }
+  }
 }
 
 // Initial state
 showView('empty');
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   3. State
-   ═══════════════════════════════════════════════════════════════════════════ */
-let fetchCount       = 0;
-let activeTermEl     = null;
-let tooltipHideTimer = null;
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   4. API Fetch
+   3. API Fetch
    ═══════════════════════════════════════════════════════════════════════════ */
 async function fetchRandomKnowledge() {
+  console.log('[APP] Randomize button clicked. Fetching random knowledge from API...');
   randomizeBtn.disabled = true;
   btnIcon.classList.add('spinning');
-  hideTooltip(true);
   showView('loading');
 
   try {
     const response = await fetch('/api/random-knowledge');
+    console.log('[APP] API responded with status:', response.status);
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     const data = await response.json();
-    renderArticle(data);
+    
+    console.log('[APP] Fetched knowledge data:', data);
+    currentSourceType = data.source_type;
+    
+    if (currentSourceType === 'Article') {
+      renderArticle(data);
+    } else {
+      renderVideo(data);
+    }
     fetchCount++;
     updateCounter(fetchCount);
   } catch (error) {
-    console.error('Failed to fetch knowledge:', error);
+    console.error('[APP] Error fetching random knowledge:', error);
     renderError();
   } finally {
     randomizeBtn.disabled = false;
     btnIcon.classList.remove('spinning');
+    console.log('[APP] Fetch cycle complete.');
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   5. Rendering
+   4. Rendering
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function renderArticle(data) {
-  activeTermEl = null;
-
+  console.log('[APP] Rendering article:', data.title);
   // Meta
-  const sourceIcon = data.source_type === 'Video' ? '▶' : '◈';
   articleMeta.innerHTML = `
-    <span class="meta__badge">${sourceIcon} ${escapeHTML(data.source_type)}</span>
+    <span class="meta__badge">📖 Article</span>
     <span class="meta__sep">·</span>
-    <span>${data.term_count} term${data.term_count !== 1 ? 's' : ''} explained</span>
+    <span class="meta__badge">${escapeHTML(data.source_name)}</span>
+    <span class="meta__sep">·</span>
+    <span>${escapeHTML(data.topic)}</span>
   `;
 
   // Title
   articleTitle.textContent = data.title;
 
-  // Body segments
+  // Body paragraphs (Render all content directly)
   articleBody.innerHTML = '';
   const fragment = document.createDocumentFragment();
-  data.segments.forEach(segment => {
-    if (segment.type === 'text') {
-      fragment.appendChild(document.createTextNode(segment.text));
-    } else if (segment.type === 'term') {
-      const span = document.createElement('span');
-      span.className = 'term-trigger';
-      span.textContent = segment.text;
-      span.setAttribute('tabindex', '0');
-      span.setAttribute('role', 'button');
-      span.setAttribute('aria-describedby', 'tooltip');
-      span.dataset.term       = segment.text;
-      span.dataset.definition = segment.definition;
-      fragment.appendChild(span);
-    }
+  data.content.forEach(pText => {
+    const p = document.createElement('p');
+    p.textContent = pText;
+    fragment.appendChild(p);
   });
   articleBody.appendChild(fragment);
 
   // Footer
   const sourceLink = data.source_url
-    ? `<a class="footer__source-link" href="${escapeHTML(data.source_url)}" target="_blank" rel="noopener noreferrer">View original ${escapeHTML(data.source_type)}</a>`
+    ? `<a class="footer__source-link" href="${escapeHTML(data.source_url)}" target="_blank" rel="noopener noreferrer">View original site ↗</a>`
     : '';
   articleFooter.innerHTML = `
     <span class="footer__terms-info">
-      <strong>${data.term_count}</strong> technical ${data.term_count !== 1 ? 'terms' : 'term'} — hover to learn more
+      Read mode active — scroll to read full content.
     </span>
     ${sourceLink}
   `;
 
-  // Switch to content (hides loading + empty automatically)
   showView('content');
   card.classList.add('card--loaded');
+  updateReadingProgress();
+}
+
+function renderVideo(data) {
+  console.log('[APP] Rendering video:', data.title, 'with video ID:', data.video_id);
+  // Meta
+  videoMeta.innerHTML = `
+    <span class="meta__badge">🎥 Video</span>
+    <span class="meta__sep">·</span>
+    <span class="meta__badge">${escapeHTML(data.channel)}</span>
+    <span class="meta__sep">·</span>
+    <span>${escapeHTML(data.topic)}</span>
+  `;
+
+  // Title
+  videoTitle.textContent = data.title;
+
+  // Footer
+  const sourceLink = data.source_url
+    ? `<a class="footer__source-link" href="${escapeHTML(data.source_url)}" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>`
+    : '';
+  videoFooter.innerHTML = `
+    <span class="footer__terms-info">
+      Watch mode active — watch the video above.
+    </span>
+    ${sourceLink}
+  `;
+
+  showView('content');
+  card.classList.add('card--loaded');
+
+  // Initialize YouTube Iframe Player
+  initYoutubePlayer(data.video_id);
 }
 
 function renderError() {
-  emptyState.querySelector('.card__empty-icon').textContent = '⚠';
+  console.log('[APP] Displaying error message to user');
   emptyState.querySelector('.card__empty-text').textContent =
-    'Could not connect to the API. Make sure the FastAPI server is running on port 8000.';
+    'Failed to gather knowledge from resources. Please check your backend connection.';
   showView('empty');
 }
 
 function updateCounter(count) {
+  console.log('[APP] Updating session interaction counter to:', count);
   counter.hidden = false;
   counterText.textContent = `${count} randomization${count !== 1 ? 's' : ''} this session`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   6. Tooltip System
+   5. YouTube Integration
    ═══════════════════════════════════════════════════════════════════════════ */
-
-const TOOLTIP_OFFSET     = 12;
-const TOOLTIP_HIDE_DELAY = 180;
-
-function showTooltip(termEl) {
-  clearTimeout(tooltipHideTimer);
-
-  tooltipTerm.textContent = termEl.dataset.term;
-  tooltipDef.textContent  = termEl.dataset.definition;
-  tooltip.setAttribute('aria-hidden', 'false');
-
-  tooltip.style.visibility = 'hidden';
-  tooltip.classList.add('is-visible');
-
-  const termRect = termEl.getBoundingClientRect();
-  const tipW     = tooltip.offsetWidth;
-  const tipH     = tooltip.offsetHeight;
-  const viewW    = window.innerWidth;
-  const viewH    = window.innerHeight;
-  const scrollY  = window.scrollY;
-
-  const placeAbove = termRect.top > tipH + TOOLTIP_OFFSET || termRect.top > viewH - termRect.bottom;
-
-  let top = placeAbove
-    ? termRect.top + scrollY - tipH - TOOLTIP_OFFSET
-    : termRect.bottom + scrollY + TOOLTIP_OFFSET;
-
-  placeAbove
-    ? tooltip.classList.remove('tooltip--above')
-    : tooltip.classList.add('tooltip--above');
-
-  let left = termRect.left + termRect.width / 2 - tipW / 2;
-  left = Math.max(16, Math.min(left, viewW - tipW - 16));
-
-  const arrowX = Math.max(16, Math.min((termRect.left + termRect.width / 2) - left, tipW - 16));
-  tooltipArrow.style.left      = `${arrowX}px`;
-  tooltipArrow.style.translate = 'none';
-
-  tooltip.style.top        = `${top}px`;
-  tooltip.style.left       = `${left}px`;
-  tooltip.style.visibility = '';
+function loadYoutubeAPI() {
+  if (isYoutubeAPILoaded) return Promise.resolve();
+  return new Promise((resolve) => {
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    window.onYouTubeIframeAPIReady = () => {
+      isYoutubeAPILoaded = true;
+      resolve();
+    };
+  });
 }
 
-function hideTooltip(immediate = false) {
-  clearTimeout(tooltipHideTimer);
-  const doHide = () => {
-    tooltip.classList.remove('is-visible');
-    tooltip.setAttribute('aria-hidden', 'true');
-    if (activeTermEl) activeTermEl.classList.remove('is-active');
-    activeTermEl = null;
-  };
-  immediate ? doHide() : (tooltipHideTimer = setTimeout(doHide, TOOLTIP_HIDE_DELAY));
+function initYoutubePlayer(videoId) {
+  console.log('[APP] Initializing YouTube Player for video ID:', videoId);
+  if (window.YT && window.YT.Player) {
+    createPlayer(videoId);
+  } else {
+    console.log('[APP] Loading YouTube Iframe API script...');
+    loadYoutubeAPI().then(() => {
+      createPlayer(videoId);
+    });
+  }
+}
+
+function createPlayer(videoId) {
+  console.log('[APP] Creating YT.Player instance for:', videoId);
+  playerReady = false;
+  
+  if (ytPlayer && typeof ytPlayer.destroy === 'function') {
+    try {
+      console.log('[APP] Destroying existing YouTube player instance');
+      ytPlayer.destroy();
+    } catch (e) {
+      console.warn("YouTube player destroy error:", e);
+    }
+  }
+
+  ytPlayer = new YT.Player('youtube-player', {
+    videoId: videoId,
+    playerVars: {
+      'autoplay': 1,
+      'playsinline': 1,
+      'rel': 0,
+      'modestbranding': 1
+    },
+    events: {
+      'onReady': () => {
+        console.log('[APP] YouTube player is ready');
+        playerReady = true;
+      },
+      'onStateChange': onPlayerStateChange
+    }
+  });
+}
+
+function onPlayerStateChange(event) {
+  console.log('[APP] YouTube player state changed to:', event.data);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   7. Term Event Delegation
+   6. Reading Progress Bar & Scroll Controls
    ═══════════════════════════════════════════════════════════════════════════ */
-articleBody.addEventListener('mouseenter', (e) => {
-  const term = e.target.closest('.term-trigger');
-  if (!term) return;
-  showTooltip(term);
-  term.classList.add('is-active');
-  activeTermEl = term;
-}, true);
-
-articleBody.addEventListener('mouseleave', (e) => {
-  const term = e.target.closest('.term-trigger');
-  if (!term) return;
-  tooltipHideTimer = setTimeout(() => {
-    if (!tooltip.matches(':hover')) hideTooltip(true);
-  }, TOOLTIP_HIDE_DELAY);
-}, true);
-
-tooltip.addEventListener('mouseenter', () => clearTimeout(tooltipHideTimer));
-tooltip.addEventListener('mouseleave', () => hideTooltip());
-
-articleBody.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const term = e.target.closest('.term-trigger');
-  if (!term) return;
-  e.preventDefault();
-  if (activeTermEl === term && tooltip.classList.contains('is-visible')) {
-    hideTooltip(true);
-  } else {
-    if (activeTermEl && activeTermEl !== term) activeTermEl.classList.remove('is-active');
-    showTooltip(term);
-    activeTermEl = term;
-    term.classList.add('is-active');
+function updateReadingProgress() {
+  if (currentSourceType !== 'Article' || articleContent.hidden) {
+    progressBar.style.width = '0%';
+    return;
   }
-});
-
-articleBody.addEventListener('click', (e) => {
-  const term = e.target.closest('.term-trigger');
-  if (!term) return;
-  if (activeTermEl === term && tooltip.classList.contains('is-visible')) {
-    hideTooltip(true);
-  } else {
-    if (activeTermEl && activeTermEl !== term) activeTermEl.classList.remove('is-active');
-    showTooltip(term);
-    activeTermEl = term;
-    term.classList.add('is-active');
+  
+  const scrollY = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight;
+  const winHeight = window.innerHeight;
+  const totalScroll = docHeight - winHeight;
+  
+  if (totalScroll <= 0) {
+    progressBar.style.width = '0%';
+    return;
   }
-});
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.term-trigger') && !e.target.closest('#tooltip')) hideTooltip(true);
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hideTooltip(true);
-});
-
-let resizeTimer;
-function repositionTooltip() {
-  if (activeTermEl && tooltip.classList.contains('is-visible')) showTooltip(activeTermEl);
+  
+  const percentage = Math.min(100, Math.max(0, (scrollY / totalScroll) * 100));
+  progressBar.style.width = `${percentage}%`;
 }
-window.addEventListener('scroll', repositionTooltip, { passive: true });
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(repositionTooltip, 100);
-}, { passive: true });
+
+window.addEventListener('scroll', updateReadingProgress, { passive: true });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   8. Button
+   7. Action Bar
    ═══════════════════════════════════════════════════════════════════════════ */
 randomizeBtn.addEventListener('click', fetchRandomKnowledge);
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   9. Utilities
+   8. Utilities
    ═══════════════════════════════════════════════════════════════════════════ */
 function escapeHTML(str) {
   if (!str) return '';

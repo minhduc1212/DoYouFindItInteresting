@@ -26,26 +26,29 @@
       </div>
       <h1 class="header__title">Do You Find It Interesting?</h1>
       <p class="header__subtitle">
-        One idea. Rendered clearly. Hover the <span class="header__highlight">underlined terms</span> to go deeper.
+        One random idea. Rendered clearly. Read the article or watch the video with an interactive transcript.
       </p>
     </header>
 
     <!-- ── Main content card ── -->
     <main class="main">
       <article class="card" id="knowledge-card" aria-live="polite" aria-atomic="true">
+        <!-- Reading Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-bar" id="reading-progress"></div>
+        </div>
 
         <!-- Loading state (shown on fetch) -->
         <div class="card__loading" id="loading-state" hidden>
           <div class="loader">
             <span></span><span></span><span></span>
           </div>
-          <p class="loader__text">Fetching knowledge…</p>
+          <p class="loader__text" id="loader-text">Fetching knowledge…</p>
         </div>
 
         <!-- Empty / initial state -->
         <div class="card__empty" id="empty-state">
-          <div class="card__empty-icon" aria-hidden="true">✦</div>
-          <p class="card__empty-text">Press the button below to surface a piece of knowledge.</p>
+          <p class="card__empty-text" id="empty-text">Select a mode above and press Randomize to surface custom knowledge.</p>
         </div>
 
         <!-- Article content (populated by JS) -->
@@ -55,6 +58,20 @@
           <div class="card__divider" aria-hidden="true"></div>
           <p class="card__body" id="article-body"></p>
           <footer class="card__footer" id="article-footer"></footer>
+        </div>
+
+        <!-- Video content (populated by JS) -->
+        <div class="card__content" id="video-content" hidden>
+          <div class="card__meta" id="video-meta"></div>
+          <h2 class="card__title" id="video-title"></h2>
+          <div class="card__divider" aria-hidden="true"></div>
+          
+          <!-- YouTube Embed Container -->
+          <div class="video-player-container">
+            <div id="youtube-player"></div>
+          </div>
+          
+          <footer class="card__footer" id="video-footer"></footer>
         </div>
 
       </article>
@@ -80,12 +97,7 @@
 
   </div>
 
-  <!-- ── Glassmorphism Tooltip (singleton, positioned by JS) ── -->
-  <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true">
-    <div class="tooltip__term" id="tooltip-term"></div>
-    <div class="tooltip__definition" id="tooltip-definition"></div>
-    <div class="tooltip__arrow" id="tooltip-arrow" aria-hidden="true"></div>
-  </div>
+
 
   <script src="app.js"></script>
 </body>
