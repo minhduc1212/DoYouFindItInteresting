@@ -77,6 +77,10 @@ showView('empty');
    ═══════════════════════════════════════════════════════════════════════════ */
 async function fetchRandomKnowledge() {
   console.log('[APP] Randomize button clicked. Fetching random knowledge from API...');
+  
+  // Stop and destroy the player first to silence any audio immediately
+  stopOrDestroyPlayer();
+
   randomizeBtn.disabled = true;
   btnIcon.classList.add('spinning');
   showView('loading');
@@ -226,18 +230,32 @@ function initYoutubePlayer(videoId) {
   }
 }
 
+function stopOrDestroyPlayer() {
+  if (ytPlayer) {
+    console.log('[APP] Stopping and destroying YouTube player...');
+    try {
+      if (typeof ytPlayer.destroy === 'function') {
+        ytPlayer.destroy();
+      }
+    } catch (e) {
+      console.warn("YouTube player destroy error:", e);
+    }
+    ytPlayer = null;
+    playerReady = false;
+  }
+  
+  // Ensure the placeholder div is present in the container
+  const container = document.querySelector('.video-player-container');
+  if (container && !document.getElementById('youtube-player')) {
+    container.innerHTML = '<div id="youtube-player"></div>';
+  }
+}
+
 function createPlayer(videoId) {
   console.log('[APP] Creating YT.Player instance for:', videoId);
   playerReady = false;
   
-  if (ytPlayer && typeof ytPlayer.destroy === 'function') {
-    try {
-      console.log('[APP] Destroying existing YouTube player instance');
-      ytPlayer.destroy();
-    } catch (e) {
-      console.warn("YouTube player destroy error:", e);
-    }
-  }
+  stopOrDestroyPlayer();
 
   ytPlayer = new YT.Player('youtube-player', {
     videoId: videoId,
