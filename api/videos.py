@@ -6,12 +6,16 @@ and formatting fallback database items.
 
 import random
 import logging
+import requests
+import xml.etree.ElementTree as ET
 from urllib.parse import urlparse, parse_qs
-from typing import Optional, Tuple, Dict, List
-import yt_dlp
+from typing import Optional, Tuple
 
 logger = logging.getLogger("api.videos")
-from api.config import CHANNELS_BY_TOPIC
+from api.config import CHANNELS_BY_TOPIC, CHANNEL_FEEDS, HEADERS
+
+# Module-level requests Session for connection pooling/Keep-Alive
+session = requests.Session()
 
 MOCK_VIDEOS = [
     {
@@ -42,41 +46,40 @@ def extract_youtube_id(url: str) -> Optional[str]:
         return video_ids[0] if video_ids else None
 
 def get_random_video_from_channel(channel_handle: str) -> Optional[Tuple[str, str]]:
-    """Get a random video (URL and title) from a YouTube channel handle."""
-    try:
-        ydl_opts = {
-            'extract_flat': 'in_playlist',
-            'quiet': True,
-            'simulate': True,
-            'playlist_end': 100,  # limit to last 100 videos
-        }
+    """Get a random video (URL and title) from a YouTube channel handle using its RSS feed."""
+    rss_url = CHANNEL_FEEDS.get(channel_handle)
+    if not rss_url:
+        logger.warning(f"No RSS URL found for channel handle: {channel_handle}")
+        return None
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            url = f"https://www.youtube.com/{channel_handle}/videos"
-            result = ydl.extract_info(url, download=False)
+    try:
+        response = session.get(rss_url, headers=HEADERS, timeout=3)
+        response.raise_for_status()
+        
+        root = ET.fromstring(response.content)
+        namespace = {'atom': 'http://www.w3.org/2005/Atom', 'yt': 'http://www.youtube.com/xml/schemas/2015'}
+        entries = root.findall('atom:entry', namespace)
+        
+        if not entries:
+            logger.warning(f"No entries found in RSS feed for {channel_handle}")
+            return None
             
-            if not result or 'entries' not in result:
-                return None
-                
-            entries = list(result['entries'])
-            if not entries:
-                return None
-                
-            video = random.choice(entries)
+        entry = random.choice(entries)
+        
+        video_id_el = entry.find('yt:videoId', namespace)
+        title_el = entry.find('atom:title', namespace)
+        link_el = entry.find('atom:link', namespace)
+        
+        video_id = video_id_el.text if video_id_el is not None else None
+        title = title_el.text if title_el is not None else "Unknown Title"
+        
+        if not video_id:
+            return None
             
-            video_url = video.get('url', '')
-            title = video.get('title', 'Unknown Title')
-            
-            if video_url and not video_url.startswith('http'):
-                video_url = f"https://www.youtube.com/watch?v={video_url}"
-                
-            video_id = video.get('id')
-            if video_id and not video_url:
-                video_url = f"https://www.youtube.com/watch?v={video_id}"
-                
-            return video_url, title
+        video_url = link_el.attrib.get('href') if link_el is not None else f"https://www.youtube.com/watch?v={video_id}"
+        return video_url, title
     except Exception as e:
-        logger.error(f"Error fetching videos for {channel_handle}: {e}")
+        logger.error(f"Error fetching RSS videos for {channel_handle}: {e}")
         return None
 
 def get_scraped_video() -> dict:
@@ -89,7 +92,7 @@ def get_scraped_video() -> dict:
     random.shuffle(all_channels)
     
     selected_video = None
-    max_attempts = 8
+    max_attempts = 3
     attempt = 0
     
     for ch_info in all_channels:

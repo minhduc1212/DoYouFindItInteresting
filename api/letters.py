@@ -13,6 +13,8 @@ from api.config import HEADERS, SITES_BY_TOPIC
 
 logger = logging.getLogger("api.letters")
 
+# Module-level requests Session for connection pooling/Keep-Alive
+session = requests.Session()
 
 MOCK_ARTICLES = [
     {
@@ -86,7 +88,7 @@ def is_valid_article_url(url: str, base_url: str, strict: bool = True) -> bool:
 def get_article_links(site_url: str) -> list:
     """Fetches the homepage and extracts potential article URLs."""
     try:
-        response = requests.get(site_url, headers=HEADERS, timeout=10)
+        response = session.get(site_url, headers=HEADERS, timeout=3)
         response.raise_for_status()
     except Exception as e:
         logger.warning(f"Error fetching homepage {site_url}: {e}")
@@ -120,7 +122,7 @@ def get_article_links(site_url: str) -> list:
 def extract_content(article_url: str) -> dict:
     """Scrapes the article URL and extracts the main content (title and body paragraphs)."""
     try:
-        response = requests.get(article_url, headers=HEADERS, timeout=10)
+        response = session.get(article_url, headers=HEADERS, timeout=3)
         response.raise_for_status()
     except Exception as e:
         logger.warning(f"Error fetching article {article_url}: {e}")
@@ -216,7 +218,7 @@ def get_scraped_article() -> dict:
     selected_site = None
     selected_article_url = None
     content = None
-    max_attempts = 10
+    max_attempts = 3
     attempt = 0
     
     for site in all_sites:
