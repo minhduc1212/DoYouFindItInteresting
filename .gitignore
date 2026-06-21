@@ -1,5 +1,8 @@
 .venv
-data
 .env
-summarize_data
 .antigravitycli
+data
+summarize_data
+__pycache__/
+*.pyc
+*.db
