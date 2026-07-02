@@ -8,7 +8,7 @@ import os
 import sys
 import random
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 # Configure standard logging to output to stdout
@@ -24,8 +24,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
-from api.letters import get_scraped_article, get_fallback_article
-from api.videos import get_scraped_video, get_fallback_video
+from api.letters import get_scraped_article
+from api.videos import get_scraped_video
 
 app = FastAPI(title="Do You Find It Interesting API", version="1.0.0")
 
@@ -56,17 +56,9 @@ def get_random_knowledge():
             logger.warning(f"Live scrape failed for {choice}: {e}. Trying alternate option...")
             continue
 
-    # Fallback to local in-memory static content
-    logger.warning("All live scraping failed. Serving from local in-memory fallback...")
-    fallback_choice = random.choice(["Article", "Video"])
-    if fallback_choice == "Article":
-        result = get_fallback_article()
-        logger.info(f"Serving fallback article: '{result.get('title')}'")
-        return result
-    else:
-        result = get_fallback_video()
-        logger.info(f"Serving fallback video: '{result.get('title')}'")
-        return result
+    # All scraping failed: raise a 503 Service Unavailable error
+    logger.error("All live scraping attempts failed.")
+    raise HTTPException(status_code=503, detail="All scraping attempts failed. Please try again.")
 
 # ── Static Frontend Serving ────────────────────────────────────────────────────
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")

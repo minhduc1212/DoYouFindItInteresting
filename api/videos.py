@@ -17,22 +17,7 @@ from api.config import CHANNELS_BY_TOPIC, CHANNEL_FEEDS, HEADERS
 # Module-level requests Session for connection pooling/Keep-Alive
 session = requests.Session()
 
-MOCK_VIDEOS = [
-    {
-        "title": "The CAP Theorem: Why Distributed Systems Can't Have Everything",
-        "url": "https://www.youtube.com/watch?v=BHqjEjzAicA",
-        "video_id": "BHqjEjzAicA",
-        "channel": "System Design School",
-        "topic": "Economics & Society"
-    },
-    {
-        "title": "Git Internals: What Actually Happens When You Commit",
-        "url": "https://www.youtube.com/watch?v=lG90LZotrpo",
-        "video_id": "lG90LZotrpo",
-        "channel": "Code Explainer",
-        "topic": "Computer Science & Programming"
-    }
-]
+
 
 def extract_youtube_id(url: str) -> Optional[str]:
     """Parses a YouTube URL to extract its video ID."""
@@ -130,14 +115,3 @@ def get_scraped_video() -> dict:
         "topic": selected_video['topic']
     }
 
-def get_fallback_video() -> dict:
-    """Returns a random in-memory mock video formatted for the frontend."""
-    video = random.choice(MOCK_VIDEOS)
-    return {
-        "source_type": "Video",
-        "title": video["title"],
-        "source_url": video["url"],
-        "video_id": video["video_id"],
-        "channel": video["channel"],
-        "topic": video["topic"]
-    }

@@ -16,32 +16,7 @@ logger = logging.getLogger("api.letters")
 # Module-level requests Session for connection pooling/Keep-Alive
 session = requests.Session()
 
-MOCK_ARTICLES = [
-    {
-        "title": "How Transformers Revolutionized Natural Language Processing",
-        "source_url": "https://arxiv.org/abs/1706.03762",
-        "content": [
-            "Before the Transformer architecture arrived in 2017, sequence modeling relied heavily on recurrent neural networks and their gated variants like LSTM and GRU. These models processed tokens one by one, making parallelization nearly impossible during training. The Transformer solved this bottleneck with a mechanism called self-attention, which allows every token in a sequence to directly attend to every other token simultaneously.",
-            "Instead of recurrence, positional encoding is injected into the input embeddings to preserve word order. The model stacks multiple layers of multi-head attention and feed-forward networks, enabling it to capture both local syntax and long-range semantic dependencies with remarkable efficiency. This architecture became the backbone of models like BERT, GPT, and T5, fundamentally reshaping how machines understand language."
-        ]
-    },
-    {
-        "title": "Understanding Docker: Containers vs. Virtual Machines",
-        "source_url": "https://www.docker.com/resources/what-container/",
-        "content": [
-            "A container is a lightweight, portable unit that packages an application along with its dependencies, libraries, and configuration into a single runnable artifact. Unlike a virtual machine, a container does not include a full guest operating system. Instead, containers share the host kernel and isolate processes using Linux namespaces and control groups (cgroups). This makes containers dramatically faster to start and far more memory-efficient than VMs.",
-            "Docker popularized containers by providing a simple CLI and a layered image format based on a union file system. Each instruction in a Dockerfile creates an immutable layer — unchanged layers are cached and reused, which accelerates builds significantly. Docker Compose extends this by letting you define multi-container applications in a single YAML manifest, orchestrating services like a web server, a database, and a cache together."
-        ]
-    },
-    {
-        "title": "How WebAssembly is Blurring the Line Between Native and Web",
-        "source_url": "https://webassembly.org/getting-started/developers-guide/",
-        "content": [
-            "WebAssembly (Wasm) is a binary instruction format designed as a portable compilation target for languages like C, C++, and Rust. Unlike JavaScript, which is parsed and JIT-compiled at runtime, Wasm is delivered as a pre-compiled binary, enabling near-native execution speeds inside the browser sandbox. The browser's JavaScript engine validates and compiles Wasm modules using ahead-of-time (AOT) compilation.",
-            "Wasm runs in the same sandboxed environment as JS and cannot directly access the DOM — it communicates with JavaScript via a Foreign Function Interface (FFI). This makes it ideal for performance-critical tasks like video encoding, 3D rendering, cryptography, and physics simulations. Beyond the browser, the WASI (WebAssembly System Interface) standard is pushing Wasm into server-side and edge computing environments as a universal, secure, and portable runtime."
-        ]
-    }
-]
+
 
 def is_valid_article_url(url: str, base_url: str, strict: bool = True) -> bool:
     """Determines whether a URL looks like an actual article/post rather than a utility or landing page."""
@@ -254,14 +229,3 @@ def get_scraped_article() -> dict:
         "content": content['paragraphs']
     }
 
-def get_fallback_article() -> dict:
-    """Returns a random in-memory mock article formatted for the frontend."""
-    art = random.choice(MOCK_ARTICLES)
-    return {
-        "source_type": "Article",
-        "title": art["title"],
-        "source_url": art["source_url"],
-        "source_name": "In-Memory Fallback",
-        "topic": "General",
-        "content": art["content"]
-    }
