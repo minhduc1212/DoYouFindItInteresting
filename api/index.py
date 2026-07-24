@@ -155,29 +155,18 @@ def summarize_knowledge(req: SummarizeRequest):
         )
 
     try:
-        tools = [{'type': 'google_search'}]
-        generation_config = {
-            'temperature': 1,
-            'max_output_tokens': 65536,
-            'top_p': 0.95,
-        }
-
-        interaction = client.interactions.create(
-            model='models/gemini-2.5-flash',
-            input=prompt,
-            tools=tools,
-            generation_config=generation_config,
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config={
+                'tools': [{'google_search': {}}],
+                'temperature': 1.0,
+                'max_output_tokens': 65536,
+                'top_p': 0.95,
+            }
         )
 
-        output_text = interaction.output_text
-        if not output_text and interaction.steps:
-            last_step = interaction.steps[-1]
-            if hasattr(last_step, 'content') and last_step.content:
-                parts = last_step.content
-                if isinstance(parts, list):
-                    output_text = "".join(getattr(p, 'text', '') for p in parts)
-                else:
-                    output_text = getattr(parts, 'text', '')
+        output_text = response.text
 
         if not output_text:
             raise Exception("No text response generated from Gemini.")
