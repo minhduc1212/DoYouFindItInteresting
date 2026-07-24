@@ -31,11 +31,14 @@ def is_valid_article_url(url: str, base_url: str, strict: bool = True) -> bool:
         
     path = parsed_url.path.lower()
     
-    # Exclude common utility/navigational links
+    # Exclude common utility/navigational/landing links
     exclude_keywords = [
         'about', 'contact', 'privacy', 'terms', 'cookie', 'subscribe', 'jobs', 'career',
         'help', 'newsletter', 'sign-in', 'login', 'register', 'cart', 'checkout', 'wp-admin',
-        'wp-content', 'wp-includes', 'index.php', 'wp-json', 'search', 'category', 'tag', 'author'
+        'wp-content', 'wp-includes', 'index.php', 'wp-json', 'search', 'category', 'categories',
+        'tag', 'tags', 'author', 'authors', 'archive', 'archives', 'feed', 'rss', 'page', 'pages',
+        'topics', 'topic', 'subject', 'subjects', 'series', 'collections', 'collection',
+        'issue', 'issues', 'videos', 'podcasts', 'newsletters', 'news', 'blog', 'blogs'
     ]
     for kw in exclude_keywords:
         if kw in path or kw in parsed_url.query.lower():
@@ -51,11 +54,22 @@ def is_valid_article_url(url: str, base_url: str, strict: bool = True) -> bool:
     if not segments:
         return False
         
+    last_segment = segments[-1]
+    
+    # Exclude image or non-article assets
+    if last_segment.endswith(('.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.xml', '.json')):
+        return False
+        
     if strict:
-        last_segment = segments[-1]
         # Article slugs typically have multiple hyphens, underscores, or digits
         has_slug_pattern = (last_segment.count('-') >= 3) or (last_segment.count('_') >= 3) or re.search(r'\d{4,}', last_segment)
         if not has_slug_pattern and len(segments) < 2:
+            return False
+    else:
+        # Non-strict fallback mode: require the last segment to have some complexity.
+        # This prevents simple sub-genre pages (e.g. /science/, /maths/, /health/) from matching.
+        has_complexity = (len(last_segment) >= 15) or (last_segment.count('-') >= 2) or (last_segment.count('_') >= 2) or any(c.isdigit() for c in last_segment)
+        if not has_complexity:
             return False
             
     return True

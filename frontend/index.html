@@ -74,6 +74,17 @@
           <footer class="card__footer" id="video-footer"></footer>
         </div>
 
+        <!-- Unified AI Summary Container -->
+        <div class="card__ai-summary" id="ai-summary-container" hidden>
+          <div class="ai-summary__header">
+            <span class="ai-summary__badge">
+              <span class="ai-summary__badge-text">Summary & Explanation</span>
+            </span>
+            <button class="ai-summary__close-btn" id="close-summary-btn" aria-label="Close summary">×</button>
+          </div>
+          <div class="ai-summary__body" id="ai-summary-body"></div>
+        </div>
+
       </article>
 
       <!-- ── Counter badge ── -->
@@ -85,8 +96,10 @@
     <!-- ── Action bar ── -->
     <div class="action-bar">
       <button class="btn btn--primary" id="randomize-btn" aria-label="Load a random piece of knowledge">
-        <span class="btn__icon" aria-hidden="true">↻</span>
         <span class="btn__label">Randomize</span>
+      </button>
+      <button class="btn btn--secondary" id="summarize-btn" aria-label="Summarize and explain current knowledge" disabled>
+        <span class="btn__label">Summarize</span>
       </button>
     </div>
 

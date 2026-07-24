@@ -37,3 +37,4 @@
 
 # Idea
     choose the topic -> random full article -> with term (expalin by api llm), full interesting video, random website, ... -> if need to summary -> call api to summary
+    the user contribute to the source of video

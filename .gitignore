@@ -2,7 +2,7 @@
 .env
 .antigravitycli
 data
-summarize_data
+note.md
 __pycache__/
 *.pyc
 *.db

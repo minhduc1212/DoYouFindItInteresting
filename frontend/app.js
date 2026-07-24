@@ -27,6 +27,12 @@ const videoMeta         = document.getElementById('video-meta');
 const videoTitle        = document.getElementById('video-title');
 const videoFooter       = document.getElementById('video-footer');
 
+// AI Summary Elements
+const summarizeBtn       = document.getElementById('summarize-btn');
+const aiSummaryContainer = document.getElementById('ai-summary-container');
+const aiSummaryBody      = document.getElementById('ai-summary-body');
+const closeSummaryBtn    = document.getElementById('close-summary-btn');
+
 // General Elements
 const counter           = document.getElementById('counter');
 const counterText       = document.getElementById('counter-text');
@@ -36,6 +42,7 @@ const counterText       = document.getElementById('counter-text');
    ═══════════════════════════════════════════════════════════════════════════ */
 let fetchCount        = 0;
 let currentSourceType = 'Article'; // Tracks current loaded source type
+let currentKnowledgeData = null; // Stores currently loaded knowledge data object
 
 // YouTube Player API State
 let isYoutubeAPILoaded = false;
@@ -55,10 +62,16 @@ function showView(view) {
   if (view === 'empty') {
     emptyState.hidden = false;
     progressBar.style.width = '0%';
+    summarizeBtn.disabled = true;
+    aiSummaryContainer.hidden = true;
+    aiSummaryBody.innerHTML = '';
   }
   if (view === 'loading') {
     loadingState.hidden = false;
     progressBar.style.width = '0%';
+    summarizeBtn.disabled = true;
+    aiSummaryContainer.hidden = true;
+    aiSummaryBody.innerHTML = '';
   }
   if (view === 'content') {
     if (currentSourceType === 'Article') {
@@ -66,6 +79,7 @@ function showView(view) {
     } else {
       videoContent.hidden = false;
     }
+    summarizeBtn.disabled = false;
   }
 }
 
@@ -82,7 +96,7 @@ async function fetchRandomKnowledge() {
   stopOrDestroyPlayer();
 
   randomizeBtn.disabled = true;
-  btnIcon.classList.add('spinning');
+  if (btnIcon) btnIcon.classList.add('spinning');
   showView('loading');
 
   try {
@@ -93,6 +107,7 @@ async function fetchRandomKnowledge() {
     
     console.log('[APP] Fetched knowledge data:', data);
     currentSourceType = data.source_type;
+    currentKnowledgeData = data; // Save loaded data
     
     if (currentSourceType === 'Article') {
       renderArticle(data);
@@ -103,10 +118,11 @@ async function fetchRandomKnowledge() {
     updateCounter(fetchCount);
   } catch (error) {
     console.error('[APP] Error fetching random knowledge:', error);
+    currentKnowledgeData = null; // Clear on error
     renderError();
   } finally {
     randomizeBtn.disabled = false;
-    btnIcon.classList.remove('spinning');
+    if (btnIcon) btnIcon.classList.remove('spinning');
     console.log('[APP] Fetch cycle complete.');
   }
 }
@@ -119,7 +135,7 @@ function renderArticle(data) {
   console.log('[APP] Rendering article:', data.title);
   // Meta
   articleMeta.innerHTML = `
-    <span class="meta__badge">📖 Article</span>
+    <span class="meta__badge">Article</span>
     <span class="meta__sep">·</span>
     <span class="meta__badge">${escapeHTML(data.source_name)}</span>
     <span class="meta__sep">·</span>
@@ -159,7 +175,7 @@ function renderVideo(data) {
   console.log('[APP] Rendering video:', data.title, 'with video ID:', data.video_id);
   // Meta
   videoMeta.innerHTML = `
-    <span class="meta__badge">🎥 Video</span>
+    <span class="meta__badge">Video</span>
     <span class="meta__sep">·</span>
     <span class="meta__badge">${escapeHTML(data.channel)}</span>
     <span class="meta__sep">·</span>
@@ -305,9 +321,161 @@ function updateReadingProgress() {
 window.addEventListener('scroll', updateReadingProgress, { passive: true });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   7. Action Bar
+   7. Action Bar & AI summary
    ═══════════════════════════════════════════════════════════════════════════ */
 randomizeBtn.addEventListener('click', fetchRandomKnowledge);
+summarizeBtn.addEventListener('click', generateAISummary);
+closeSummaryBtn.addEventListener('click', () => {
+  aiSummaryContainer.hidden = true;
+  aiSummaryBody.innerHTML = '';
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7a. AI Summarizer Integration
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function generateAISummary() {
+  if (!currentKnowledgeData) return;
+  
+  console.log('[APP] Summarize button clicked. Fetching summary for:', currentKnowledgeData.title);
+  
+  // Disable buttons
+  summarizeBtn.disabled = true;
+  randomizeBtn.disabled = true;
+  
+  aiSummaryContainer.hidden = false;
+  aiSummaryBody.innerHTML = `
+    <div class="ai-summary__loading">
+      <div class="ai-summary__spinner"></div>
+      <p>Analyzing resources and generating summary...</p>
+    </div>
+  `;
+  
+  // Scroll to summary box
+  aiSummaryContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const response = await fetch('/api/summarize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(currentKnowledgeData)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API returned status ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('[APP] Summary generated successfully');
+    
+    aiSummaryBody.innerHTML = parseMarkdown(result.summary);
+    aiSummaryContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+  } catch (error) {
+    console.error('[APP] Error generating AI summary:', error);
+    aiSummaryBody.innerHTML = `
+      <div class="ai-summary__error" style="color: var(--color-accent); font-family: var(--font-ui); font-size: 0.85rem; padding: 20px 0; text-align: center;">
+        <strong>Error:</strong> Failed to generate AI summary. Please check your internet connection or backend logs.
+      </div>
+    `;
+  } finally {
+    summarizeBtn.disabled = false;
+    randomizeBtn.disabled = false;
+  }
+}
+
+function parseMarkdown(mdText) {
+  if (!mdText) return '';
+  
+  // Escape HTML first to prevent XSS injection
+  let html = escapeHTML(mdText);
+  
+  // Split the text into lines
+  const lines = html.split('\n');
+  let resultHtml = [];
+  let inList = false;
+  let listType = null; // 'ul' or 'ol'
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    if (line === '') {
+      if (inList) {
+        resultHtml.push(`</${listType}>`);
+        inList = false;
+        listType = null;
+      }
+      continue;
+    }
+    
+    // Headings
+    if (line.startsWith('#### ')) {
+      if (inList) { resultHtml.push(`</${listType}>`); inList = false; listType = null; }
+      resultHtml.push(`<h4>${line.slice(5)}</h4>`);
+      continue;
+    }
+    if (line.startsWith('### ')) {
+      if (inList) { resultHtml.push(`</${listType}>`); inList = false; listType = null; }
+      resultHtml.push(`<h3>${line.slice(4)}</h3>`);
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      if (inList) { resultHtml.push(`</${listType}>`); inList = false; listType = null; }
+      resultHtml.push(`<h3>${line.slice(3)}</h3>`);
+      continue;
+    }
+    
+    // Unordered List items
+    const ulMatch = line.match(/^[\*\-\+]\s+(.*)/);
+    if (ulMatch) {
+      if (!inList || listType !== 'ul') {
+        if (inList) resultHtml.push(`</${listType}>`);
+        resultHtml.push('<ul>');
+        inList = true;
+        listType = 'ul';
+      }
+      resultHtml.push(`<li>${ulMatch[1]}</li>`);
+      continue;
+    }
+    
+    // Ordered List items
+    const olMatch = line.match(/^(\d+)\.\s+(.*)/);
+    if (olMatch) {
+      if (!inList || listType !== 'ol') {
+        if (inList) resultHtml.push(`</${listType}>`);
+        resultHtml.push('<ol>');
+        inList = true;
+        listType = 'ol';
+      }
+      resultHtml.push(`<li>${olMatch[2]}</li>`);
+      continue;
+    }
+    
+    // Normal paragraph
+    if (inList) {
+      resultHtml.push(`</${listType}>`);
+      inList = false;
+      listType = null;
+    }
+    
+    resultHtml.push(`<p>${line}</p>`);
+  }
+  
+  if (inList) {
+    resultHtml.push(`</${listType}>`);
+  }
+  
+  let processedHtml = resultHtml.join('\n');
+  
+  // Bold formatting: **text**
+  processedHtml = processedHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Italic formatting: *text* or _text_
+  processedHtml = processedHtml.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  processedHtml = processedHtml.replace(/_(.*?)_/g, '<em>$1</em>');
+  
+  return processedHtml;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    8. Utilities
