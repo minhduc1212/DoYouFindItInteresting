@@ -223,6 +223,21 @@ def get_random_knowledge(background_tasks: BackgroundTasks):
                 background_tasks.add_task(replenish_video_cache)
                 return random.choice(FALLBACK_VIDEOS)
 
+@app.get("/api/debug-key")
+def debug_key():
+    """
+    Secure endpoint to check if GEMINI_API_KEY is successfully loaded
+    in the Vercel environment without leaking the secret value.
+    """
+    key = os.environ.get("GEMINI_API_KEY")
+    return {
+        "is_set": key is not None,
+        "length": len(key) if key else 0,
+        "starts_with": key[:4] if key and len(key) > 4 else "None",
+        "ends_with": key[-4:] if key and len(key) > 4 else "None",
+        "has_quotes": key.startswith(('"', "'")) or key.endswith(('"', "'")) if key else False
+    }
+
 # ── Static Frontend Serving ────────────────────────────────────────────────────
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
