@@ -329,10 +329,12 @@ def _strip_boilerplate(container):
     for sel in ('aside', 'nav', 'script', 'style', 'noscript', 'iframe', 'form', 'button', 'header', 'footer'):
         for el in container.find_all(sel):
             el.decompose()
+    # Word-boundary-wrapped so a keyword like "promo" can't match inside a longer
+    # legitimate class token (e.g. The Conversation's "inline-promos" content wrapper).
     boiler_classes = re.compile(
-        r'related|recommended|share|author-bio|byline|newsletter|subscribe|promo|advert'
-        r'|advertisement|comments|tags|social|see-also|more-articles|recommended-reading'
-        r'|read-more|related-articles', re.I)
+        r'\b(?:related|recommended|share|author-bio|byline|newsletter|subscribe|promo'
+        r'|advert|advertisement|comments|tags|social|see-also|more-articles'
+        r'|recommended-reading|read-more|related-articles)\b', re.I)
     for el in container.find_all(['div', 'section', 'aside']):
         if el.parent is None:
             continue  # already detached by an ancestor's decompose (bs4 invalidates .attrs)
