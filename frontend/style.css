@@ -214,15 +214,6 @@ body {
   animation: fade-in 0.4s var(--ease-out) both;
 }
 
-.card__empty-icon {
-  font-size: 2rem;
-  color: var(--color-border);
-  animation: spin-slow 12s linear infinite;
-}
-@keyframes spin-slow {
-  to { transform: rotate(360deg); }
-}
-
 .card__empty-text {
   font-family: var(--font-ui);
   font-size: 0.875rem;
@@ -445,7 +436,7 @@ body {
 .action-bar {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -488,14 +479,7 @@ body {
   transform: none;
 }
 
-.btn__icon {
-  font-size: 1.1rem;
-  display: inline-block;
-  transition: transform 0.5s var(--ease-out);
-}
-.btn__icon.spinning {
-  animation: spin .7s linear infinite;
-}
+/* Used by the AI summary loading spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── 10. Site Footer ──────────────────────────────────────────────────────── */
@@ -507,59 +491,7 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* ── 9a. Mode Selector ────────────────────────────────────────────────────── */
-.mode-selector {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  z-index: 5;
-}
-
-.mode-btn {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-family: var(--font-ui);
-  font-size: 0.8rem;
-  font-weight: 500;
-  padding: 10px 20px;
-  border-radius: 99px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.25s var(--ease-out);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
-.mode-btn:hover {
-  background: var(--color-bg-card);
-  color: var(--color-text);
-  border-color: var(--color-text-light);
-}
-
-.mode-btn.active {
-  background: var(--color-bg-card);
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 12px rgba(201, 135, 58, 0.08);
-}
-
-.mode-btn__icon {
-  font-size: 0.95rem;
-}
-
 /* ── 9b. Video & Transcript Layout ───────────────────────────────────────── */
-.video-layout {
-  display: grid;
-  grid-template-columns: 1.8fr 1fr;
-  gap: 24px;
-  margin-top: 16px;
-  text-align: left;
-  align-items: stretch;
-}
-
 .video-player-container {
   background: #000;
   border-radius: 12px;
@@ -575,6 +507,68 @@ body {
   border: none;
   width: 100%;
   height: 100%;
+}
+
+/* Article hero image — 16:9, revealed once the JS onload fires */
+.card__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+/* Video thumbnail with click-to-play overlay (no autoplay) */
+.video-thumb__play {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background: #000;
+  display: block;
+}
+
+.video-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-thumb__play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.6rem;
+  padding-left: 4px;
+  transition: transform .2s var(--ease-out), background-color .2s;
+}
+
+.video-thumb__play:hover .video-thumb__play-icon {
+  transform: scale(1.08);
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.video-player-container.video-thumb--placeholder {
+  background: #111;
 }
 
 .video-transcript-container {
@@ -843,10 +837,6 @@ body {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.ai-summary__badge-icon {
-  font-size: 0.85rem;
 }
 
 .ai-summary__close-btn {

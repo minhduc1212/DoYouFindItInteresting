@@ -34,7 +34,12 @@
         https://www.youtube.com/@IBMTechnology
         https://www.youtube.com/@harvardbusinessreview
         https://www.youtube.com/@ScienceMaps
-
+        https://www.youtube.com/@thediscussion9994
+        https://www.youtube.com/@DanielGreeneReviews
+        https://www.youtube.com/@RagnarRoxShow
+        https://www.youtube.com/@movieoverload
+        https://www.youtube.com/@LindsayEllisVids
 # Idea
     choose the topic -> random full article -> with term (expalin by api llm), full interesting video, random website, ... -> if need to summary -> call api to summary
     the user contribute to the source of video
+    update fallback

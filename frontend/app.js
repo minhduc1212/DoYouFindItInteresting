@@ -6,7 +6,6 @@
    1. DOM References
    ═══════════════════════════════════════════════════════════════════════════ */
 const randomizeBtn      = document.getElementById('randomize-btn');
-const btnIcon           = randomizeBtn.querySelector('.btn__icon');
 const card              = document.getElementById('knowledge-card');
 const loadingState      = document.getElementById('loading-state');
 const emptyState        = document.getElementById('empty-state');
@@ -19,6 +18,7 @@ const articleMeta       = document.getElementById('article-meta');
 const articleTitle      = document.getElementById('article-title');
 const articleBody       = document.getElementById('article-body');
 const articleFooter     = document.getElementById('article-footer');
+const articleImage      = document.getElementById('article-image');
 const progressBar       = document.getElementById('reading-progress');
 
 // Video Mode Elements
@@ -26,6 +26,7 @@ const videoContent      = document.getElementById('video-content');
 const videoMeta         = document.getElementById('video-meta');
 const videoTitle        = document.getElementById('video-title');
 const videoFooter       = document.getElementById('video-footer');
+const videoPlayerContainer = document.querySelector('.video-player-container');
 
 // AI Summary Elements
 const summarizeBtn       = document.getElementById('summarize-btn');
@@ -48,6 +49,8 @@ let currentKnowledgeData = null; // Stores currently loaded knowledge data objec
 let isYoutubeAPILoaded = false;
 let ytPlayer           = null;
 let playerReady        = false;
+let currentVideoId     = null; // Video shown as thumbnail (or playing)
+let currentThumbUrl    = null; // Thumbnail URL to restore after destroying the player
 
 /**
  * Switch the card to one of three mutually-exclusive views.
@@ -96,7 +99,6 @@ async function fetchRandomKnowledge() {
   stopOrDestroyPlayer();
 
   randomizeBtn.disabled = true;
-  if (btnIcon) btnIcon.classList.add('spinning');
   showView('loading');
 
   try {
@@ -122,7 +124,6 @@ async function fetchRandomKnowledge() {
     renderError();
   } finally {
     randomizeBtn.disabled = false;
-    if (btnIcon) btnIcon.classList.remove('spinning');
     console.log('[APP] Fetch cycle complete.');
   }
 }
@@ -133,6 +134,17 @@ async function fetchRandomKnowledge() {
 
 function renderArticle(data) {
   console.log('[APP] Rendering article:', data.title);
+
+  // Hero image (hidden until loaded, or if the URL is broken/missing)
+  if (data.thumbnail_url) {
+    articleImage.onload  = () => { articleImage.hidden = false; };
+    articleImage.onerror = () => { articleImage.hidden = true; };
+    articleImage.src = data.thumbnail_url;
+  } else {
+    articleImage.removeAttribute('src');
+    articleImage.hidden = true;
+  }
+
   // Meta
   articleMeta.innerHTML = `
     <span class="meta__badge">Article</span>
@@ -199,8 +211,8 @@ function renderVideo(data) {
   showView('content');
   card.classList.add('card--loaded');
 
-  // Initialize YouTube Iframe Player
-  initYoutubePlayer(data.video_id);
+  // Show thumbnail with a click-to-play overlay (iframe only loads on click)
+  showVideoThumbnail(data.video_id, data.thumbnail_url);
 }
 
 function renderError() {
@@ -234,14 +246,44 @@ function loadYoutubeAPI() {
   });
 }
 
-function initYoutubePlayer(videoId) {
+function showVideoThumbnail(videoId, thumbUrl) {
+  currentVideoId  = videoId;
+  currentThumbUrl = thumbUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+  videoPlayerContainer.classList.remove('video-thumb--placeholder');
+  videoPlayerContainer.innerHTML = `
+    <button class="video-thumb__play" id="video-play-btn" aria-label="Play video">
+      <img class="video-thumb" src="${escapeHTML(currentThumbUrl)}" alt="Video thumbnail" />
+      <span class="video-thumb__play-icon">▶</span>
+    </button>
+  `;
+
+  // Fallback chain for broken thumbnails: try hqdefault, then a neutral placeholder
+  const thumbImg = videoPlayerContainer.querySelector('.video-thumb');
+  let fallbackTried = false;
+  thumbImg.onerror = () => {
+    if (!fallbackTried) {
+      fallbackTried = true;
+      thumbImg.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    } else {
+      videoPlayerContainer.classList.add('video-thumb--placeholder');
+      thumbImg.style.display = 'none';
+    }
+  };
+
+  document.getElementById('video-play-btn').addEventListener('click', () => {
+    initYoutubePlayer(currentVideoId, { autoplay: true });
+  });
+}
+
+function initYoutubePlayer(videoId, opts = {}) {
   console.log('[APP] Initializing YouTube Player for video ID:', videoId);
   if (window.YT && window.YT.Player) {
-    createPlayer(videoId);
+    createPlayer(videoId, opts);
   } else {
     console.log('[APP] Loading YouTube Iframe API script...');
     loadYoutubeAPI().then(() => {
-      createPlayer(videoId);
+      createPlayer(videoId, opts);
     });
   }
 }
@@ -259,24 +301,26 @@ function stopOrDestroyPlayer() {
     ytPlayer = null;
     playerReady = false;
   }
-  
-  // Ensure the placeholder div is present in the container
-  const container = document.querySelector('.video-player-container');
-  if (container && !document.getElementById('youtube-player')) {
-    container.innerHTML = '<div id="youtube-player"></div>';
+
+  // Restore the thumbnail so the card isn't left as an empty black box
+  if (currentVideoId) {
+    showVideoThumbnail(currentVideoId, currentThumbUrl);
+  } else if (!document.getElementById('youtube-player')) {
+    videoPlayerContainer.innerHTML = '<div id="youtube-player"></div>';
   }
 }
 
-function createPlayer(videoId) {
+function createPlayer(videoId, opts = {}) {
   console.log('[APP] Creating YT.Player instance for:', videoId);
   playerReady = false;
-  
-  stopOrDestroyPlayer();
+
+  // Replace the thumbnail with the actual player div
+  videoPlayerContainer.innerHTML = '<div id="youtube-player"></div>';
 
   ytPlayer = new YT.Player('youtube-player', {
     videoId: videoId,
     playerVars: {
-      'autoplay': 1,
+      'autoplay': opts.autoplay ? 1 : 0,
       'playsinline': 1,
       'rel': 0,
       'modestbranding': 1

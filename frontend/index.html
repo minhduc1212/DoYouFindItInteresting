@@ -48,12 +48,13 @@
 
         <!-- Empty / initial state -->
         <div class="card__empty" id="empty-state">
-          <p class="card__empty-text" id="empty-text">Select a mode above and press Randomize to surface custom knowledge.</p>
+          <p class="card__empty-text" id="empty-text">Press Randomize to surface a random piece of knowledge.</p>
         </div>
 
         <!-- Article content (populated by JS) -->
         <div class="card__content" id="article-content" hidden>
           <div class="card__meta" id="article-meta"></div>
+          <img id="article-image" class="card__image" alt="" hidden />
           <h2 class="card__title" id="article-title"></h2>
           <div class="card__divider" aria-hidden="true"></div>
           <p class="card__body" id="article-body"></p>
@@ -105,7 +106,7 @@
 
     <!-- ── Footer ── -->
     <footer class="site-footer">
-      <p>Built with <span aria-hidden="true">◆</span> FastAPI + Vanilla JS</p>
+      <p>Built with FastAPI + Vanilla JS</p>
     </footer>
 
   </div>
